@@ -1,8 +1,15 @@
 package com.example.springmvc;
 
 
+import jakarta.servlet.http.Cookie;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
+import jakarta.servlet.http.HttpSession;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
+import java.io.File;
+import java.io.IOException;
 import java.util.Arrays;
 import java.util.List;
 
@@ -52,5 +59,47 @@ public class RequestController {
     @RequestMapping("/{articleId}")
     public String r9(@PathVariable("articleId") Integer articleId){
         return "就收到的参数" + articleId;
+    }
+
+    @RequestMapping("r11")
+    public String r11(MultipartFile file) throws IOException {
+         String name = file.getName();
+         String originalFilename = file.getOriginalFilename();
+        System.out.println("originalFilename:" + originalFilename);
+        String contentType = file.getContentType();
+        System.out.println("contentType:" + contentType);
+        file.transferTo(new File("D:\\可清理\\" + originalFilename));
+        return "接收到的文件" + name;
+    }
+
+    // 获取Cookie
+    @RequestMapping("r12")
+    public String r12(HttpServletRequest request , HttpServletResponse response){
+        Cookie[] cookies = request.getCookies();
+        StringBuilder builder = new StringBuilder();
+        if(cookies != null) {
+            for (Cookie ck:cookies) {
+                builder.append(ck.getName() + "" +ck.getValue());
+            }
+        }
+        return "Cookie信息" + builder;
+    }
+    @RequestMapping("setsess")
+    public String setsess(HttpServletRequest request){
+        HttpSession session = request.getSession();
+
+        if(session != null){
+            session.setAttribute("username" , "java");
+        }
+        return "session 存储成功";
+    }
+    @RequestMapping("sess")
+    public String sess(HttpServletRequest request){
+        HttpSession session = request.getSession(false);
+        String username = null;
+        if(session != null && session.getAttribute("username") != null){
+            username = (String) session.getAttribute("username");
+        }
+        return "username:" + username;
     }
 }
