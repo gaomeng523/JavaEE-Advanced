@@ -9,10 +9,14 @@
 		<relativePath/> <!-- lookup parent from repository -->
 	</parent>
 	<groupId>com.example</groupId>
-	<artifactId>spring-book-demo</artifactId>
+	<artifactId>spring-captcha-demo</artifactId>
 	<version>0.0.1-SNAPSHOT</version>
-	<name>spring-book-demo</name>
-	<description>Demo project for Spring Boot</description>
+	<name>spring-captcha-demo</name>
+	<description>spring</description>
+
+	<properties>
+		<java.version>17</java.version>
+	</properties>
 	<dependencies>
 		<dependency>
 			<groupId>org.springframework.boot</groupId>
@@ -29,6 +33,12 @@
 			<artifactId>spring-boot-starter-test</artifactId>
 			<scope>test</scope>
 		</dependency>
+		<dependency>
+			<groupId>cn.hutool</groupId>
+			<artifactId>hutool-captcha</artifactId>
+			<version>5.8.22</version>
+		</dependency>
+
 	</dependencies>
 
 	<build>

@@ -9,21 +9,19 @@
 		<relativePath/> <!-- lookup parent from repository -->
 	</parent>
 	<groupId>com.example</groupId>
-	<artifactId>spring-book-demo</artifactId>
+	<artifactId>spring-ioc-demo</artifactId>
 	<version>0.0.1-SNAPSHOT</version>
-	<name>spring-book-demo</name>
-	<description>Demo project for Spring Boot</description>
+	<name>spring-ioc-demo</name>
+	<description>ioc demo</description>
+	<properties>
+		<java.version>17</java.version>
+	</properties>
 	<dependencies>
 		<dependency>
 			<groupId>org.springframework.boot</groupId>
 			<artifactId>spring-boot-starter-web</artifactId>
 		</dependency>
 
-		<dependency>
-			<groupId>org.projectlombok</groupId>
-			<artifactId>lombok</artifactId>
-			<optional>true</optional>
-		</dependency>
 		<dependency>
 			<groupId>org.springframework.boot</groupId>
 			<artifactId>spring-boot-starter-test</artifactId>
