@@ -1,0 +1,8 @@
+captcha:
+  width: 150
+  height: 50
+  code-num: 4
+  line-count: 20
+  session:
+    session-name: captcha_session_key
+    session-date: captcha_session_date
