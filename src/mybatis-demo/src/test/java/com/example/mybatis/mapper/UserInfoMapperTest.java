@@ -20,4 +20,10 @@ class UserInfoMapperTest {
         List<UserInfo> userInfos = userInfoMapper.selectAll();
         userInfos.forEach(System.out::println);
     }
+
+    @Test
+    void selectById() {
+        UserInfo userInfo = userInfoMapper.selectById(1);
+        System.out.println(userInfo);
+    }
 }

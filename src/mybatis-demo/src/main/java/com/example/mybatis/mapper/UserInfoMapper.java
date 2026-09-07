@@ -11,4 +11,10 @@ public interface UserInfoMapper {
 
     @Select("select * from user_info")
     List<UserInfo> selectAll();
+
+    @Select("select * from user_info where id = #{id}")
+    UserInfo selectById(Integer id);
+
+    
+
 }
