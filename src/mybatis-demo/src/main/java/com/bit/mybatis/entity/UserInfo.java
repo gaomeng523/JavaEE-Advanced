@@ -1,4 +1,4 @@
-package com.example.mybatis.entity;
+package com.bit.mybatis.entity;
 
 import lombok.Data;
 
@@ -15,4 +15,5 @@ public class UserInfo {
     private Integer deleteFlag;
     private Date createTime;
     private Date updateTime;
+
 }

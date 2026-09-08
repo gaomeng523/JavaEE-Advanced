@@ -1,0 +1,157 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.bit.mybatis.mapper.UserInfoXmlMapper">
+        <!-- 起别名   -->
+<!--    <select id="selectAll" resultType="com.bit.mybatis.entity.UserInfo">-->
+<!--        select id, username, password, age, gender, phone, -->
+<!--        delete_flag as deleteFlag,-->
+<!--        create_time as createTime,-->
+<!--        update_time as updateTime from user_info-->
+<!--    </select>-->
+
+<!--    <resultMap id="BaseMapXml" type="com.bit.mybatis.entity.UserInfo">-->
+<!--        <id property="id" column="id"></id>-->
+<!--        <result property="deleteFlag" column="delete_flag"></result>-->
+<!--        <result property="createTime" column="create_time"></result>-->
+<!--        <result property="updateTime" column="update_time"></result>-->
+<!--    </resultMap>-->
+    <sql id="cols">
+        id, username, password, age, gender, phone,
+        delete_flag, create_time, update_time
+    </sql>
+    <select id="selectAll" resultType="com.bit.mybatis.entity.UserInfo">
+        select
+        <include refid="cols"></include>
+        from user_info
+    </select>
+    <select id="selectById" resultType="com.bit.mybatis.entity.UserInfo">
+        select
+        <include refid="cols"></include>
+        from user_info where id= #{id}
+    </select>
+    <select id="selectByAgeAndGender" resultType="com.bit.mybatis.entity.UserInfo">
+        select
+        <include refid="cols"></include>
+        from user_info where age= #{age} and gender= #{gender}
+    </select>
+
+    <select id="selectByAgeAndGender2" resultType="com.bit.mybatis.entity.UserInfo">
+        select * from user_info where age= #{age} and gender= #{g}
+    </select>
+
+    <insert id="insertUser" useGeneratedKeys="true" keyProperty="id">
+        insert into user_info (username, `password`, age, gender)
+        values (#{username},#{password},#{age},#{gender}) 
+    </insert>
+    <insert id="insertUser2">
+        insert into user_info (username, `password`, age, gender)
+        values (#{userInfo.username},#{userInfo.password},#{userInfo.age},#{userInfo.gender})
+    </insert>
+
+    <delete id="deleteUserById">
+        delete from user_info where id= #{id}
+    </delete>
+
+
+    <update id="updateUserById">
+        update user_info set gender=#{gender} where id=#{id}
+    </update>
+
+    <insert id="insertByCondition">
+        insert into user_info
+        <trim suffixOverrides="," prefix="(" suffix=")">
+            <if test="username!=null">
+                username,
+            </if>
+            <if test="password!=null">
+                `password`,
+            </if>
+            <if test="age!=null">
+                age,
+            </if>
+            <if test="gender!=null">
+                gender
+            </if>
+        </trim>
+        values
+        <trim suffixOverrides="," prefix="(" suffix=")">
+            <if test="username!=null">
+                #{username},
+            </if>
+            <if test="password!=null">
+                #{password},
+            </if>
+            <if test="age!=null">
+                #{age},
+            </if>
+            <if test="gender!=null">
+                #{gender}
+            </if>
+        </trim>
+    </insert>
+
+    <select id="selectByCondition" resultType="com.bit.mybatis.entity.UserInfo">
+<!--        select * from user_info where 1=1-->
+<!--        <trim prefixOverrides="and">-->
+<!--            <if test="age!=null">-->
+<!--               and age = #{age}-->
+<!--            </if>-->
+<!--            <if test="gender!=null">-->
+<!--                and gender = #{gender}-->
+<!--            </if>-->
+<!--        </trim>-->
+
+        select * from user_info
+        <where>
+            <if test="age!=null">
+                age = #{age}
+            </if>
+            <if test="gender!=null">
+                and gender = #{gender}
+            </if>
+        </where>
+
+    </select>
+
+    <update id="updateByCondition">
+<!--        update user_info set-->
+<!--        <trim suffixOverrides=",">-->
+<!--            <if test="username!=null">-->
+<!--                username=#{username},-->
+<!--            </if>-->
+<!--            <if test="age!=null">-->
+<!--                age =#{age},-->
+<!--            </if>-->
+<!--            <if test="gender!=null">-->
+<!--                gender = #{gender}-->
+<!--            </if>-->
+<!--        </trim>-->
+<!--        <where>-->
+<!--            id = #{id}-->
+<!--        </where>-->
+
+        update user_info
+        <set>
+            <if test="username!=null">
+                username=#{username}
+            </if>
+            <if test="age!=null">
+                ,age =#{age}
+            </if>
+            <if test="gender!=null">
+                ,gender = #{gender}
+            </if>
+        </set>
+        <where>
+            id = #{id}
+        </where>
+    </update>
+
+    <delete id="batchDelete">
+        delete from user_info where id in
+        <foreach collection="ids" item="id" open="(" close=")" separator=",">
+            #{id}
+        </foreach>
+    </delete>
+
+</mapper>
