@@ -1,6 +1,7 @@
-package com.example.springmvc;
+package com.example.springmvc.controller;
 
 
+import com.example.springmvc.entity.Person;
 import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;

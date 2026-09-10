@@ -1,4 +1,4 @@
-package com.example.springmvc;
+package com.example.springmvc.entity;
 
 public class Person {
     private int id;

@@ -1,5 +1,8 @@
-package com.example.springmvc;
+package com.example.springmvc.controller;
 
+import com.example.springmvc.entity.MessageInfo;
+import com.example.springmvc.service.MessageInfoService;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.util.StringUtils;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -11,7 +14,9 @@ import java.util.List;
 @RequestMapping("message")
 @RestController
 public class MessageController {
-    private List<MessageInfo> messageInfoList = new ArrayList<>();
+//    private List<MessageInfo> messageInfoList = new ArrayList<>();
+    @Autowired
+    private MessageInfoService messageInfoService;
     @RequestMapping("publish")
     public Boolean publish(@RequestBody MessageInfo messageInfo){
         if(!StringUtils.hasLength(messageInfo.getFrom())
@@ -19,12 +24,12 @@ public class MessageController {
         || !StringUtils.hasLength(messageInfo.getMessage())){
             return false;
         }
-        messageInfoList.add(messageInfo);
+        messageInfoService.addMessage(messageInfo);
         return true;
     }
 
     @RequestMapping("getList")
     public List<MessageInfo> getList(){
-        return messageInfoList;
+        return messageInfoService.queryAllMessage();
     }
 }

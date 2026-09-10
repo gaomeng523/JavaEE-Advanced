@@ -41,7 +41,7 @@
 
     <insert id="insertUser" useGeneratedKeys="true" keyProperty="id">
         insert into user_info (username, `password`, age, gender)
-        values (#{username},#{password},#{age},#{gender}) 
+        values (#{username},#{password},#{age},#{gender})
     </insert>
     <insert id="insertUser2">
         insert into user_info (username, `password`, age, gender)
