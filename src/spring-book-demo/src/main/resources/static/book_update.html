@@ -59,10 +59,66 @@
     </div>
     <script type="text/javascript" src="js/jquery.min.js"></script>
     <script>
-        
+        //页面加载时按 url 上的 bookId 回填图书信息
+        $(function () {
+            var bookId = getUrlParam("bookId");
+            if (bookId == "" || bookId == "0") {
+                alert("缺少图书ID");
+                return;
+            }
+            $("#bookId").val(bookId);
+            $.ajax({
+                type: "get",
+                url: "/book/queryBookById",
+                data: {
+                    bookId: bookId
+                },
+                success: function (result) {
+                    //统一返回体：图书数据在 result.data 里
+                    if (result.code != 200 || !result.data) {
+                        alert(result.msg);
+                        return;
+                    }
+                    var book = result.data;
+                    $("#bookName").val(book.bookName);
+                    $("#bookAuthor").val(book.author);
+                    $("#bookStock").val(book.count);
+                    $("#bookPrice").val(book.price);
+                    $("#bookPublisher").val(book.publish);
+                    $("#bookStatus").val(book.status);
+                },
+                error: function (error) {
+                    console.log(error);
+                    alert("查询图书信息失败");
+                }
+            });
+        });
+
+        function getUrlParam(name) {
+            var reg = new RegExp("(^|&)" + name + "=([^&]*)(&|$)");
+            var result = window.location.search.substr(1).match(reg);
+            return result == null ? "" : decodeURIComponent(result[2]);
+        }
+
         function update() {
-            alert("更新成功");
-            location.href = "book_list.html"
+            $.ajax({
+                type: "post",
+                url: "/book/updateBook",
+                data: $("#updateBook").serialize(),
+                success: function (result) {
+                    //统一返回体：code == 200 代表成功，失败看 msg
+                    if (result.code == 200) {
+                        alert("更新成功");
+                        location.href = "book_list.html";
+                    } else {
+                        alert(result.msg);
+                    }
+                },
+                error: function (error) {
+                    console.log(error);
+                    alert("请求失败，请稍后再试");
+                }
+            });
         }
     </script>
 </body>

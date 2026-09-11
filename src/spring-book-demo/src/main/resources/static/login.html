@@ -33,26 +33,32 @@
     <script src="js/jquery.min.js"></script>
     <script>
         function login() {
+            var name = $.trim($("#userName").val());
+            var password = $.trim($("#password").val());
+            if (name == "" || password == "") {
+                alert("请输入用户名和密码");
+                return;
+            }
             $.ajax({
                 url: "user/login",
                 type: "POST",
                 data: {
-                    name: $("#userName").val(),
-                    password: $("#password").val()
+                    name: name,
+                    password: password
                 },
                 success: function (result) {
-                    if (result) {
+                    //统一返回体：code == 200 才代表登录成功，失败原因在后端给的 msg 里
+                    if (result.code == 200) {
                         alert("登录成功");
-                        location.href = "book_list.html";
+                        location.href = "book_list.html?currentPage=1";
                     } else {
-                        alert("账号或密码错误");
+                        alert(result.msg);
                     }
                 },
                 error: function () {
                     alert("请求失败，请稍后再试");
                 }
             });
-            location.href = "book_list.html";
         }
     </script>
 </body>

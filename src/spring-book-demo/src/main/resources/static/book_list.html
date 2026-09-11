@@ -23,22 +23,25 @@
                 <button class="btn btn-outline-info" type="button" onclick="batchDelete()">批量删除</button>
             </div>
         </div>
-        <table class="table table-hover">
+
+        <table>
             <thead>
                 <tr>
-                    <th scope="col"><input type="checkbox" id="selectAll" onclick="selectAll(this)"></th>
-                    <th scope="col">图书名称</th>
-                    <th scope="col">图书作者</th>
-                    <th scope="col">图书库存</th>
-                    <th scope="col">图书定价</th>
-                    <th scope="col">出版社</th>
-                    <th scope="col">图书状态</th>
-                    <th scope="col">操作</th>
+                    <td>选择</td>
+                    <td class="width100">图书ID</td>
+                    <td>书名</td>
+                    <td>作者</td>
+                    <td>数量</td>
+                    <td>定价</td>
+                    <td>出版社</td>
+                    <td>状态</td>
+                    <td class="width200">操作</td>
                 </tr>
             </thead>
-            <tbody id="bookList">
-                <!-- 图书列表数据 -->
+            <tbody>
+
             </tbody>
+        </table>
 
         <div class="demo">
             <ul id="pageContainer" class="pagination justify-content-center"></ul>
@@ -49,67 +52,147 @@
             function getBookList() {
                 $.ajax({
                     type: "get",
-                    url: "/book/getList",
-                    success: function (bookList) {
-                        console.log(bookList);
-                        if (bookList != null) {
-                            var finalHtml = "";
-                            for (var book of bookList) {
-                                finalHtml += '<tr>';
-                                finalHtml += '<td><input type="checkbox" name="selectBook" value="' + book.id + '" id="selectBook" class="book-select"></td>';
-                                finalHtml += '<td>' + book.id + '</td>';
-                                finalHtml += '<td>' + book.bookName + '</td>';
-                                finalHtml += '<td>' + book.author + '</td>';
-                                finalHtml += '<td>' + book.count + '</td>';
-                                finalHtml += '<td>' + book.price + '</td>';
-                                finalHtml += '<td>' + book.publish + '</td>';
-                                finalHtml += '<td>' + book.statusCN + '</td>';
-                                finalHtml += '<td><div class="op">';
-                                finalHtml += '<a href="book_update.html?bookId=' + book.id + '">修改</a>';
-                                finalHtml += '<a href="javascript:void(0)" onclick="deleteBook(' + book.id + ')">删除</a>';
-                                finalHtml += '</div></td>';
-                                finalHtml += "</tr>";
-                            }
-                            $("tbody").html(finalHtml);
+                    url: "/book/getListByPage" + location.search,
+                    success: function (result) {
+                        //对结果进行初步校验, 自行补充 //TODO
+                        //统一返回体：code == 200 才算成功，分页数据在 result.data 里
+                        if (!result || result.code != 200) {
+                            console.error("图书列表响应格式错误", result);
+                            return;
                         }
+                        let data = result.data;
+                        if (!Array.isArray(data.records)) {
+                            console.error("图书列表响应格式错误", result);
+                            return;
+                        }
+                        let bookList = data.records;
+                        let finalHtml = "";
+                        for (let book of bookList) {
+                            finalHtml += '<tr>';
+                            finalHtml += '<td><input type="checkbox" name="selectBook" value="' + book.id + '" class="book-select"></td>';
+                            finalHtml += '<td>' + book.id + '</td>';
+                            finalHtml += '<td>' + escapeHtml(book.bookName) + '</td>';
+                            finalHtml += '<td>' + escapeHtml(book.author) + '</td>';
+                            finalHtml += '<td>' + book.count + '</td>';
+                            finalHtml += '<td>' + book.price + '</td>';
+                            finalHtml += '<td>' + escapeHtml(book.publish) + '</td>';
+                            finalHtml += '<td>' + escapeHtml(book.statusCN) + '</td>';
+                            finalHtml += '<td><div class="op">';
+                            finalHtml += '<a href="book_update.html?bookId=' + book.id + '">修改</a>';
+                            finalHtml += '<a href="javascript:void(0)" onclick="deleteBook(' + book.id + ')">删除</a>';
+                            finalHtml += '</div></td></tr>';
+                        }
+                        $("tbody").html(finalHtml);
+
+                        //翻页信息
+                        $("#pageContainer").jqPaginator({
+                            totalCounts: data.count, //总记录数
+                            pageSize: 10,    //每页的个数
+                            visiblePages: 5, //可视页数
+                            currentPage: data.request ? data.request.currentPage : 1,  //当前页码
+                            first: '<li class="page-item"><a class="page-link">首页</a></li>',
+                            prev: '<li class="page-item"><a class="page-link" href="javascript:void(0);">上一页<\/a><\/li>',
+                            next: '<li class="page-item"><a class="page-link" href="javascript:void(0);">下一页<\/a><\/li>',
+                            last: '<li class="page-item"><a class="page-link" href="javascript:void(0);">最后一页<\/a><\/li>',
+                            page: '<li class="page-item"><a class="page-link" href="javascript:void(0);">{{page}}<\/a><\/li>',
+                            //页面初始化和页码点击时都会执行
+                            onPageChange: function (page, type) {
+                                console.log("第" + page + "页, 类型:" + type);
+                                if (type == "change") {
+                                    location.href = "book_list.html?currentPage=" + page;
+                                }
+                            }
+                        });
+                    },
+                    error: function (error) {
+                        console.log(error);
+                        if (error.status == 401) {
+                            location.href = "login.html";
+                        }
+
                     }
                 });
             }
 
-    
-            //翻页信息
-            $("#pageContainer").jqPaginator({
-                totalCounts: 100, //总记录数
-                pageSize: 10,    //每页的个数
-                visiblePages: 5, //可视页数
-                currentPage: 1,  //当前页码
-                first: '<li class="page-item"><a class="page-link">首页</a></li>',
-                prev: '<li class="page-item"><a class="page-link" href="javascript:void(0);">上一页<\/a><\/li>',
-                next: '<li class="page-item"><a class="page-link" href="javascript:void(0);">下一页<\/a><\/li>',
-                last: '<li class="page-item"><a class="page-link" href="javascript:void(0);">最后一页<\/a><\/li>',
-                page: '<li class="page-item"><a class="page-link" href="javascript:void(0);">{{page}}<\/a><\/li>',
-                //页面初始化和页码点击时都会执行
-                onPageChange: function (page, type) {
-                    console.log("第"+page+"页, 类型:"+type);
+            //把文本里的特殊字符转义，避免书名/作者里的标签被浏览器当成 HTML 执行
+            function escapeHtml(text) {
+                if (text == null) {
+                    return "";
                 }
-            });
+                return String(text).replace(/[&<>"']/g, function (c) {
+                    return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c];
+                });
+            }
+
             function deleteBook(id) {
                 var isDelete = confirm("确认删除?");
                 if (isDelete) {
                     //删除图书
-                    alert("删除成功");
+                    $.ajax({
+                        type: "post",
+                        url: "/book/updateBook",
+                        data: {
+                            id: id,
+                            status: 0
+                        },
+                        success: function (result) {
+                            //统一返回体：code == 200 代表成功
+                            if (result.code == 200) {
+                                //删除成功
+                                alert("删除成功");
+                                location.href = "book_list.html";
+                            } else {
+                                //删除失败
+                                alert(result.msg);
+                            }
+                        },
+                        error: function (error) {
+                            console.log(error);
+                            if (error.status == 401) {
+                                location.href = "login.html";
+                            }
+                        }
+                    });
                 }
             }
+
             function batchDelete() {
+                //获取复选框的id
+                var ids = [];
+                $("input:checkbox[name='selectBook']:checked").each(function () {
+                    ids.push($(this).val());
+                });
+                if (ids.length == 0) {
+                    alert("请先选择要删除的图书");
+                    return;
+                }
                 var isDelete = confirm("确认批量删除?");
                 if (isDelete) {
-                    //获取复选框的id
-                    var ids = [];
-                    $("input:checkbox[name='selectBook']:checked").each(function () {
-                        ids.push($(this).val());
-                    });
                     console.log(ids);
-                    alert("批量删除成功");
+                    $.ajax({
+                        type: "post",
+                        url: "/book/batchDeleteBook",
+                        data: {
+                            ids: ids
+                        },
+                        //jQuery 默认序列化成 ids[]=1&ids[]=2，后端是按 ids=1&ids=2 接收的，所以要关掉
+                        traditional: true,
+                        success: function (result) {
+                            if (result.code == 200) {
+                                //批量删除成功
+                                alert("批量删除成功");
+                                location.href = "book_list.html";
+                            } else {
+                                alert(result.msg);
+                            }
+                        },
+                        error: function (error) {
+                            console.log(error);
+                            if (error.status == 401) {
+                                location.href = "login.html";
+                            }
+                        }
+                    });
                 }
             }
 

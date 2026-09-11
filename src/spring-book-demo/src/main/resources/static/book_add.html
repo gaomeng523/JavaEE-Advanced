@@ -69,11 +69,19 @@
                     url: "/book/addBook",
                     data: $("#addBook").serialize(),
                     success: function(result){
-                        if(result==""){
+                        //统一返回体：code == 200 代表成功，失败就看 msg
+                        if(result.code == 200){
                             alert("添加成功");
                             location.href = "book_list.html";
                         }else {
-                            alert(result);
+                            alert(result.msg);
+                        }
+                    },
+                    error: function (error) {
+                        console.log(error);
+                        //拦截器发现没登录会返回 401，这里跳回登录页
+                        if (error.status == 401) {
+                            location.href = "login.html";
                         }
                     }
             });

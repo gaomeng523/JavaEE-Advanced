@@ -11,12 +11,8 @@ import org.springframework.stereotype.Service;
 public class UserService {
     @Autowired
     private UserInfoMapper userInfoMapper;
-    public Boolean checkPassword(String name, String password) {
+    public UserInfo getUserInfo(String name, String password) {
         UserInfo userInfo = userInfoMapper.queryUserById(name);
-        if(userInfo == null || !password.equals(userInfo.getPassword())){
-            log.warn("用户密码验证错误, name:{}",name);
-            return false;
-        }
-        return true;
+        return userInfo;
     }
 }

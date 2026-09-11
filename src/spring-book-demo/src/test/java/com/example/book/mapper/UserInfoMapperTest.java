@@ -1,7 +1,6 @@
 package com.example.book.mapper;
 
 import com.example.book.entity.UserInfo;
-import com.example.book.mapper.UserInfoMapper;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
