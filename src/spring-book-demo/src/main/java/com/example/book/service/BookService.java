@@ -18,20 +18,20 @@ import java.util.List;
 public class BookService {
     @Autowired
     private BookMapper bookMapper;
-    @Autowired
-    private BookDao bookDao;
-    public List<BookInfo> getList(){
-//        BookDao bookDao = new BookDao();
-        List<BookInfo> bookInfos = bookDao.mockData();
-        for (BookInfo bookInfo: bookInfos) {
-            if(bookInfo.getStatus() == 1){
-                bookInfo.setStatusCN("可借阅");
-            }else {
-                bookInfo.setStatusCN("不可借阅");
-            }
-        }
-        return bookInfos;
-    }
+//    @Autowired
+//    private BookDao bookDao;
+//    public List<BookInfo> getList(){
+////        BookDao bookDao = new BookDao();
+//        List<BookInfo> bookInfos = bookDao.mockData();
+//        for (BookInfo bookInfo: bookInfos) {
+//            if(bookInfo.getStatus() == 1){
+//                bookInfo.setStatusCN("可借阅");
+//            }else {
+//                bookInfo.setStatusCN("不可借阅");
+//            }
+//        }
+//        return bookInfos;
+//    }
 
     public Integer addBook(BookInfo bookInfo) {
         Integer result = null;

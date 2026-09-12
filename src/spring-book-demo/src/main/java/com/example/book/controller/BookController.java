@@ -21,12 +21,12 @@ import java.util.List;
 public class BookController {
     @Autowired
     private BookService bookService;
-    @RequestMapping("getList")
-    public Result<List<BookInfo>> getList(){
-//        BookService bookService = new BookService();
-        List<BookInfo> bookInfos = bookService.getList();
-        return Result.success(bookInfos);
-    }
+//    @RequestMapping("getList")
+//    public Result<List<BookInfo>> getList(){
+////        BookService bookService = new BookService();
+//        List<BookInfo> bookInfos = bookService.getList();
+//        return Result.success(bookInfos);
+//    }
 
     @RequestMapping("addBook")
     public Result<Void> addBook(BookInfo bookInfo){
@@ -41,6 +41,7 @@ public class BookController {
         }
 
         Integer result = bookService.addBook(bookInfo);
+        // result 表示插入了一条数据，影响行数为一行
         if (result != null && result == 1) {
             // 成功但没有数据要返回，用无参的 success()
             return Result.success();
