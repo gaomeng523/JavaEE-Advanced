@@ -54,5 +54,5 @@ class UserInfoMapperTest {
         List<UserInfo> userInfos = userInfoMapper.selectList(queryWrapper);
         System.out.println(userInfos);
     }
-    
+
 }
