@@ -1,3 +1,7 @@
 spring:
   application:
     name: Spring-aop-demo
+  aop:
+    # Spring Boot 2.x 开始默认使用 CGLIB 代理（proxyTargetClass = true）
+    # 打开下面这行会改成 JDK 动态代理，此时 SpringProxyMain 中按类型 getBean 会失败
+    # proxy-target-class: false
