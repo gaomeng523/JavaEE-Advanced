@@ -1,0 +1,17 @@
+package com.example.springblogdemo.common.exception;
+
+import lombok.Data;
+
+@Data
+public class BlogException extends RuntimeException {
+    private Integer code;
+    private String message;
+    public BlogException(Integer code, String message) {
+        this.code = code;
+        this.message = message;
+    }
+
+    public BlogException(String message) {
+        this.message = message;
+    }
+}
