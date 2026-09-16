@@ -35,10 +35,13 @@ public class BlogServiceImpl implements BlogService {
 
     @Override
     public BlogInfoResponse getBlogDetal(Integer blogId) {
-        BlogInfo blogInfo = blogMapper.selectOne(new LambdaQueryWrapper<BlogInfo>()
+        BlogInfo blogInfo = getBlogInfo(blogId);
+        return BeanTransfer.trans(blogInfo);
+    }
+
+    public BlogInfo getBlogInfo(Integer blogId) {
+        return blogMapper.selectOne(new LambdaQueryWrapper<BlogInfo>()
                 .eq(BlogInfo::getDeleteFlag , Constant.UNDELETE)
                 .eq(BlogInfo::getId,blogId));
-
-        return BeanTransfer.trans(blogInfo);
     }
 }

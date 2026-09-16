@@ -41,7 +41,29 @@
     <script src="js/jquery.min.js"></script>
     <script>
         function login() {
-            location.assign("blog_list.html");
+            $.ajax({
+                url: '/user/login',
+                type: 'post',
+                contentType: 'application/json',
+                data:JSON.parse({
+                    username: $('#username').val(),
+                    password: $('#password').val()
+                }),
+                success: function(result) {
+                    if(result != null && result.code == 200 && result.data != null){
+                        let data = result.data;
+                        localStorage.setItem("loginUserId",data.id);
+                        localStorage.setItem("userToken",data.token);
+                        location.assign("blog_list.html")
+                    }
+                },
+                error: function(error) {
+                    if(error.status == 400){
+                        alert("参数校验失败");
+                    }
+                }
+            });
+            // location.assign("blog_list.html");
         }
     </script>
 </body>

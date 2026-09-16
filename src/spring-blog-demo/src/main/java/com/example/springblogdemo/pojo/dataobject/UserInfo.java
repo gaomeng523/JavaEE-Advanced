@@ -9,7 +9,7 @@ import java.util.Date;
 public class UserInfo {
     @TableId(value = "id" , type = IdType.AUTO)
     private Integer id;
-    private String username;
+    private String userName;
     private String password;
     private String githubUrl;
     private Integer deleteFlag;
