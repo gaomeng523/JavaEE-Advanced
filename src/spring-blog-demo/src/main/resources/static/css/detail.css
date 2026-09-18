@@ -1,112 +1,208 @@
+/* ==========================================================================
+   详情页样式（CSDN 文章页效果）
+   --------------------------------------------------------------------------
+   核心目标：让正文读起来舒服、层次分明。
+   - 标题居中大字号，标题下一条 meta 信息
+   - 正文 16px / 1.8 行高，左对齐（不再用首行缩进）
+   - 代码块深色底、圆角，模拟 CSDN 的代码块观感
+   - 标题层级、引用块、列表、表格都补齐样式
+   ========================================================================== */
+
 .content {
     width: 100%;
-    height: 95%;
-}
-.right>.content .title{
-    font-size: 18px;
-    font-weight: 700;
-    margin: 20px;
-    text-align: center;
-}
-.right .content .date{
-    color: green;
-    text-align: center;
-    margin-bottom: 20px;
-}
-.right .content .detail>p{
-    text-indent: 2em;
-    line-height: 24px;
-    margin-bottom: 10px;
 }
 
-/* markdown 渲染出来的标题、列表、代码块原本没有样式，
-   这里补上基础排版，否则正文会挤成一团 */
+/* 文章标题：居中、大字号、加粗 */
+.right > .content .title {
+    font-size: 28px;
+    font-weight: 700;
+    color: var(--text-main);
+    margin: 8px 0 12px;
+    text-align: center;
+    line-height: 1.4;
+    word-break: break-word;
+}
+
+/* 标题下的时间信息 */
+.right .content .date {
+    color: var(--text-sub);
+    text-align: center;
+    font-size: 13px;
+    margin-bottom: 24px;
+    padding-bottom: 24px;
+    border-bottom: 1px solid var(--border);
+}
+
+/* ==========================================================================
+   正文排版（作用于 markdown 渲染产物）
+   ========================================================================== */
+.right .content .detail {
+    font-size: 16px;
+    line-height: 1.8;
+    color: var(--text-main);
+    word-break: break-word;
+}
+
+/* 段落：去掉首行缩进（CSDN 正文是顶格 + 段间距） */
+.right .content .detail > p {
+    margin-bottom: 16px;
+    text-indent: 0;
+}
+
+/* 标题层级：主色左边框 + 加粗，层次感更强 */
 .right .content .detail h1,
 .right .content .detail h2,
 .right .content .detail h3,
-.right .content .detail h4{
-    margin: 20px 0 10px;
+.right .content .detail h4 {
+    margin: 28px 0 14px;
     line-height: 1.4;
+    font-weight: 700;
+    color: var(--text-main);
 }
-.right .content .detail h1{ font-size: 24px; }
-.right .content .detail h2{ font-size: 20px; }
-.right .content .detail h3{ font-size: 18px; }
-.right .content .detail h4{ font-size: 16px; }
-
-.right .content .detail ul,
-.right .content .detail ol{
-    padding-left: 2em;
-    margin-bottom: 10px;
-    line-height: 24px;
+.right .content .detail h1 {
+    font-size: 24px;
+    padding-bottom: 8px;
+    border-bottom: 1px solid var(--border);
 }
-.right .content .detail ul{ list-style: disc; }
-.right .content .detail ol{ list-style: decimal; }
-
-.right .content .detail blockquote{
-    border-left: 4px solid #ddd;
+.right .content .detail h2 {
+    font-size: 21px;
     padding-left: 12px;
-    margin: 10px 0;
-    color: #666;
+    border-left: 4px solid var(--primary);
+}
+.right .content .detail h3 { font-size: 18px; }
+.right .content .detail h4 { font-size: 16px; }
+
+/* 列表 */
+.right .content .detail ul,
+.right .content .detail ol {
+    padding-left: 2em;
+    margin-bottom: 16px;
+    line-height: 1.8;
+}
+.right .content .detail ul { list-style: disc; }
+.right .content .detail ol { list-style: decimal; }
+.right .content .detail li {
+    margin-bottom: 4px;
 }
 
-.right .content .detail pre{
-    background-color: #f5f5f5;
-    padding: 12px;
-    border-radius: 5px;
+/* 引用块 */
+.right .content .detail blockquote {
+    border-left: 4px solid var(--primary);
+    background-color: #fff7f5;
+    padding: 12px 16px;
+    margin: 16px 0;
+    color: #555;
+    border-radius: 0 4px 4px 0;
+}
+.right .content .detail blockquote p {
+    margin-bottom: 0;
+}
+
+/* 代码块：深色底，模拟 CSDN / GitHub 的深色代码块 */
+.right .content .detail pre {
+    background-color: #282c34;
+    color: #e6e6e6;
+    padding: 16px;
+    border-radius: 8px;
     overflow-x: auto;
-    margin-bottom: 10px;
+    margin-bottom: 16px;
+    line-height: 1.6;
 }
-.right .content .detail code{
-    font-family: Consolas, Monaco, monospace;
-    font-size: 13px;
-}
-.right .content .detail img{
-    max-width: 100%;
-}
-.right .content .detail table{
-    border-collapse: collapse;
-    margin-bottom: 10px;
-}
-.right .content .detail table th,
-.right .content .detail table td{
-    border: 1px solid #ddd;
-    padding: 6px 12px;
-}
-
-.content .operating{
-    padding-top: 50px;
-    width: 40%;
-    margin: 0 auto;
-    display: flex;
-    justify-content: space-between;
-}
-
-/* 默认隐藏操作按钮，只有作者本人访问时 JS 才移除这个类。
-   用类名而不是 inline style，是为了不破坏上面的 display:flex */
-.content .operating.hide{
-    display: none;
-}
-.content .operating button{
-    width: 100px;
-    height: 40px;
-    background-color:green;
-    color: white;
-    border-radius: 5px;
-    border: none;
-}
-
-/* 未登录时显示的提示：解释为什么没有编辑 / 删除按钮。
-   居中、弱化配色，避免喧宾夺主抢正文的注意力。 */
-.content .login-tip{
-    text-align: center;
-    padding-top: 40px;
-    color: gray;
+.right .content .detail pre code {
+    background-color: transparent;
+    padding: 0;
+    color: inherit;
+    font-family: Consolas, Monaco, "Courier New", monospace;
     font-size: 14px;
 }
-.content .login-tip.hide{
+
+/* 行内代码：浅灰底、圆角 */
+.right .content .detail code {
+    font-family: Consolas, Monaco, "Courier New", monospace;
+    font-size: 14px;
+    background-color: #f0f0f0;
+    padding: 2px 6px;
+    border-radius: 4px;
+    color: #d14;
+}
+
+/* 图片：圆角 + 居中 + 限宽 */
+.right .content .detail img {
+    max-width: 100%;
+    border-radius: 6px;
+    display: block;
+    margin: 8px auto;
+}
+
+/* 表格：细边框、表头浅灰底 */
+.right .content .detail table {
+    border-collapse: collapse;
+    margin-bottom: 16px;
+    width: 100%;
+    font-size: 14px;
+}
+.right .content .detail table th,
+.right .content .detail table td {
+    border: 1px solid var(--border);
+    padding: 8px 12px;
+}
+.right .content .detail table th {
+    background-color: #f7f8fa;
+    font-weight: 600;
+}
+
+/* ==========================================================================
+   操作按钮区（编辑 / 删除）
+   ========================================================================== */
+.content .operating {
+    padding-top: 32px;
+    margin-top: 32px;
+    border-top: 1px solid var(--border);
+    width: 60%;
+    margin-left: auto;
+    margin-right: auto;
+    display: flex;
+    justify-content: center;
+    gap: 16px;
+}
+
+/* 默认隐藏，只有作者本人访问时 JS 才移除 hide 类 */
+.content .operating.hide {
     display: none;
 }
-.content .login-tip>a{
-    color: green;
+.content .operating button {
+    width: 110px;
+    height: 40px;
+    border-radius: 4px;
+    border: none;
+    font-size: 15px;
+    cursor: pointer;
+    transition: opacity 0.2s;
+}
+.content .operating button:hover {
+    opacity: 0.85;
+}
+/* 编辑用主色，删除用危险红 */
+.content .operating button:first-child {
+    background-color: var(--primary);
+    color: #fff;
+}
+.content .operating button:last-child {
+    background-color: var(--danger);
+    color: #fff;
+}
+
+/* 未登录时的提示 */
+.content .login-tip {
+    text-align: center;
+    padding-top: 40px;
+    color: var(--text-sub);
+    font-size: 14px;
+}
+.content .login-tip.hide {
+    display: none;
+}
+.content .login-tip > a {
+    color: var(--primary);
     text-decoration: none;
 }

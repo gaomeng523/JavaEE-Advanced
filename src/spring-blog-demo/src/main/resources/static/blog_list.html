@@ -12,17 +12,22 @@
 </head>
 <body>
     <div class="nav">
-        <img src="pic/logo2.jpg" alt="">
-        <span class="blog-title">我的博客系统</span>
-        <div class="space"></div>
-        <a class="nav-span" href="blog_list.html">主页</a>
-        <a class="nav-span" href="blog_edit.html">写博客</a>
-        <!--
-            这一块由 JS 渲染：
-            初始内容按「未登录」来写，登录后由 getUserInfo() 替换成「注销」。
-            这样匿名访客不会看到一个点了就跳走的「注销」。
-        -->
-        <span id="navAuth"><a class="nav-span" href="blog_login.html">登录</a></span>
+        <div class="nav-inner">
+            <a class="nav-logo" href="blog_list.html">
+                <img src="pic/logo2.jpg" alt="logo">
+                <span>我的博客</span>
+            </a>
+            <div class="nav-menu">
+                <a class="nav-link" href="blog_list.html">首页</a>
+                <a class="nav-link nav-write" href="blog_edit.html">写博客</a>
+                <!--
+                    这一块由 JS 渲染：
+                    初始内容按「未登录」来写，登录后由 renderNavAuth() 替换成「注销」。
+                    这样匿名访客不会看到一个点了就跳走的「注销」。
+                -->
+                <span id="navAuth"><a class="nav-link" href="blog_login.html">登录</a></span>
+            </div>
+        </div>
     </div>
 
     <div class="container">
@@ -80,17 +85,20 @@
                     var finalHtml = "";
                     for (var i = 0; i < blogList.length; i++) {
                         var blogInfo = blogList[i];
-                        finalHtml += '<div class="blog">';
+                        // 整张卡片是一个链接，点击任意位置都能进详情页
+                        finalHtml += '<a class="blog-card" href="blog_detail.html?blogId='
+                            + encodeURIComponent(blogInfo.id) + '">';
                         // 标题和内容都来自用户输入，必须转义，否则会形成 XSS 漏洞
-                        finalHtml += '<div class="title">' + escapeHtml(blogInfo.title) + '</div>';
-                        // updateTime 为空时后端会返回 null，这里兜底显示
-                        finalHtml += '<div class="date">' + (blogInfo.updateTime || "暂无时间") + '</div>';
+                        finalHtml += '<div class="blog-title">' + escapeHtml(blogInfo.title) + '</div>';
                         // 列表页只展示摘要，避免把整篇正文都铺在首页
-                        finalHtml += '<div class="desc">' + escapeHtml(toSummary(blogInfo.content)) + '</div>';
-                        // blogId 是后端返回的 Integer，理论上安全，但拼进 URL 前仍统一转义更稳妥
-                        finalHtml += '<a class="detail" href="blog_detail.html?blogId='
-                            + encodeURIComponent(blogInfo.id) + '">查看全文&gt;&gt;</a>';
+                        finalHtml += '<div class="blog-desc">' + escapeHtml(toSummary(blogInfo.content)) + '</div>';
+                        // 底部 meta：更新时间 + 阅读入口
+                        finalHtml += '<div class="blog-meta">';
+                        // updateTime 是后端格式化好的字符串（非用户输入），可直接展示
+                        finalHtml += '    <span class="blog-time">' + (blogInfo.updateTime || "暂无时间") + '</span>';
+                        finalHtml += '    <span class="blog-more">阅读全文</span>';
                         finalHtml += '</div>';
+                        finalHtml += '</a>';
                     }
                     $(".container .right").html(finalHtml);
                     $("#blogCount").text(blogList.length);

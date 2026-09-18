@@ -1,41 +1,89 @@
-.right>.blog>.title{
-    text-align: center;
-    font-weight: 700;
-    margin: 10px;
-}
+/* ==========================================================================
+   列表页样式（CSDN 卡片式）
+   ========================================================================== */
 
-.right>.blog>.date{
-    text-align: center;
-    color: green;
-    margin: 10px;
-}
-.right>.blog>.desc{
-    text-indent: 2em;
-}
-.right>.blog>.detail{
+/* 文章卡片：整卡是一个 <a>，白底圆角，hover 抬升阴影、标题变主色 */
+.blog-card {
     display: block;
-    width: 100px;
-    height: 30px;
-    text-align: center;
-    border: 1px solid black;
-    margin: 10px auto 30px;
-    line-height: 30px;
     text-decoration: none;
-    color: black;
-    /* margin-bottom: 20px; */
+    color: var(--text-main);
+    background-color: #fff;
+    padding: 20px 24px;
+    margin-bottom: 16px;
+    border-radius: 8px;
+    box-shadow: var(--shadow);
+    border: 1px solid transparent;
+    transition: box-shadow 0.2s, border-color 0.2s;
+}
+.blog-card:hover {
+    border-color: var(--primary);
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.06), 0 8px 20px rgba(0, 0, 0, 0.08);
 }
 
-/* 空列表状态：没有博客时给一句提示 + 一个「去写第一篇」的按钮，
-   靠 flex 垂直居中，比原来单独一行文字看起来更像个正经页面 */
-.right>.empty{
+/* 标题：加粗、深色、hover 变主色 */
+.blog-card .blog-title {
+    font-size: 18px;
+    font-weight: 700;
+    color: var(--text-main);
+    margin-bottom: 8px;
+    line-height: 1.4;
+    transition: color 0.2s;
+}
+.blog-card:hover .blog-title {
+    color: var(--primary);
+}
+
+/* 摘要：次要文字，最多三行，超出省略 */
+.blog-card .blog-desc {
+    color: var(--text-sub);
+    font-size: 14px;
+    line-height: 1.7;
+    margin-bottom: 14px;
+    display: -webkit-box;
+    -webkit-line-clamp: 3;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+}
+
+/* 底部 meta：时间靠左、阅读入口靠右 */
+.blog-card .blog-meta {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 13px;
+    color: var(--text-sub);
+}
+.blog-card .blog-time {
+    color: var(--text-sub);
+}
+.blog-card .blog-more {
+    color: var(--primary);
+    font-weight: 500;
+}
+
+/* 空列表状态：没有博客时给一句提示 + 一个「去写第一篇」的按钮 */
+.right > .empty {
     height: 100%;
     display: flex;
     flex-direction: column;
     align-items: center;
     justify-content: center;
-    color: #666;
+    color: var(--text-sub);
 }
-.right>.empty>p{
-    margin-bottom: 10px;
+.right > .empty > p {
+    margin-bottom: 16px;
     font-size: 16px;
+}
+.right > .empty > .detail {
+    display: inline-block;
+    padding: 8px 24px;
+    background-color: var(--primary);
+    color: #fff;
+    border-radius: 4px;
+    text-decoration: none;
+    font-size: 14px;
+    transition: background-color 0.2s;
+}
+.right > .empty > .detail:hover {
+    background-color: var(--primary-hover);
 }

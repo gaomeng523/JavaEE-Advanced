@@ -122,7 +122,7 @@ function renderNavAuth() {
         return;
     }
 
-    var $logout = $('<a class="nav-span" href="#">注销</a>');
+    var $logout = $('<a class="nav-link" href="#">注销</a>');
     $logout.on("click", function (e) {
         e.preventDefault();
         logout();

@@ -15,13 +15,18 @@
 
 <body>
     <div class="nav">
-        <img src="pic/logo2.jpg" alt="">
-        <span class="blog-title">我的博客系统</span>
-        <div class="space"></div>
-        <a class="nav-span" href="blog_list.html">主页</a>
-        <a class="nav-span" href="blog_edit.html">写博客</a>
-        <!-- 本页必须登录才能进入，所以初始先不显示「登录」入口 -->
-        <span id="navAuth"></span>
+        <div class="nav-inner">
+            <a class="nav-logo" href="blog_list.html">
+                <img src="pic/logo2.jpg" alt="logo">
+                <span>我的博客</span>
+            </a>
+            <div class="nav-menu">
+                <a class="nav-link" href="blog_list.html">首页</a>
+                <a class="nav-link nav-write" href="blog_edit.html">写博客</a>
+                <!-- 本页必须登录才能进入，所以初始先不显示「登录」入口 -->
+                <span id="navAuth"></span>
+            </div>
+        </div>
     </div>
     <div class="content-edit">
         <div class="push">

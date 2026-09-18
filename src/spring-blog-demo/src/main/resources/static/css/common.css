@@ -1,96 +1,187 @@
+/* ==========================================================================
+   全站公共样式（CSDN 风格）
+   --------------------------------------------------------------------------
+   设计基调参考 CSDN 浅色主题：
+   - 浅灰页面背景 + 白色卡片，靠圆角和阴影做出层次，不再用半透明 + 背景图
+   - 主色用 CSDN 的招牌红橙 #fc5531（写博客按钮、链接 hover、高亮）
+   - 顶部导航栏吸顶（sticky），白底细边框，与内容区分开
+   ========================================================================== */
+
 * {
     margin: 0;
     padding: 0;
     box-sizing: border-box;
 }
-html,body{
+
+/* CSS 变量：把主题色集中定义，以后想换配色只改这里 */
+:root {
+    --bg: #f4f5f5;             /* 页面背景：CSDN 那种浅灰 */
+    --card-bg: #ffffff;        /* 卡片背景 */
+    --primary: #fc5531;        /* 主色：CSDN 红橙 */
+    --primary-hover: #f2491f;  /* 主色 hover 加深 */
+    --primary-bg: #fdf2ef;     /* 主色的淡背景（hover 底色） */
+    --text-main: #252933;      /* 主要文字 */
+    --text-sub: #8a919f;       /* 次要文字（时间、说明） */
+    --border: #e5e6eb;         /* 边框线 */
+    --shadow: 0 1px 2px rgba(0, 0, 0, 0.04), 0 4px 12px rgba(0, 0, 0, 0.05);
+    --danger: #f5222d;         /* 危险操作（删除） */
+}
+
+html, body {
     width: 100%;
     height: 100%;
-    background-image: url(../pic/cat.jpg);
-    background-size: cover;
-    background-position: center center;
+    background-color: var(--bg);
+    color: var(--text-main);
+    font-family: -apple-system, BlinkMacSystemFont, "PingFang SC",
+                 "Hiragino Sans GB", "Microsoft YaHei", "Segoe UI", sans-serif;
+    font-size: 15px;
+    line-height: 1.6;
+    -webkit-font-smoothing: antialiased;
 }
-.nav{
-    height: 50px;
-    width: 100%;
-    color: white;
-    background-color: rgba(144, 141, 141, 0.5);
 
+/* ==========================================================================
+   顶部导航栏（吸顶，白底）
+   ========================================================================== */
+.nav {
+    position: sticky;
+    top: 0;
+    z-index: 100;
+    height: 56px;
+    width: 100%;
+    background-color: #fff;
+    border-bottom: 1px solid var(--border);
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.03);
+}
+
+/* 导航内部用一条固定宽度的居中容器，保证大屏下内容不铺满整行 */
+.nav-inner {
+    max-width: 1200px;
+    height: 100%;
+    margin: 0 auto;
+    padding: 0 16px;
     display: flex;
-    justify-content: center;
     align-items: center;
 }
-.nav>img{
-    width: 40px;
-    height: 40px;
-    border-radius:50%;
-    margin:5px 10px ;
-}
-.nav>.space{
-    width: 60%;
-    display: inline;
-}
-.nav>.blog-title{
-    width: 100px;
-}
-.nav>.nav-span{
-    width: 80px;
-    text-decoration: none;
-    color: white;
-}
-.container{
-    /* border: 1px solid red; */
-    width: 800px;
-    height: calc(100% - 50px);
-    margin: 0 auto;
 
+/* 左侧 logo + 站点名 */
+.nav-logo {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    text-decoration: none;
+    color: var(--text-main);
+    font-weight: 700;
+    font-size: 17px;
+}
+.nav-logo img {
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+}
+
+/* 右侧菜单（靠右，用 margin-left:auto 顶过去） */
+.nav-menu {
+    margin-left: auto;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+/* 普通导航链接 */
+.nav-link {
+    padding: 6px 14px;
+    text-decoration: none;
+    color: var(--text-main);
+    font-size: 15px;
+    border-radius: 4px;
+    transition: color 0.2s, background-color 0.2s;
+}
+.nav-link:hover {
+    color: var(--primary);
+    background-color: var(--primary-bg);
+}
+
+/* 「写博客」作为主行动按钮，用主色实底突出，对应 CSDN 的「写文章」按钮 */
+.nav-link.nav-write {
+    background-color: var(--primary);
+    color: #fff;
+    font-weight: 500;
+}
+.nav-link.nav-write:hover {
+    background-color: var(--primary-hover);
+    color: #fff;
+}
+
+/* ==========================================================================
+   主内容容器（列表页 / 详情页共用的左右两栏布局）
+   ========================================================================== */
+.container {
+    width: 100%;
+    max-width: 1000px;
+    height: calc(100% - 56px);
+    margin: 0 auto;
+    padding: 16px;
     display: flex;
     justify-content: space-between;
-    align-items: center;
-}
-.container>.left{
-    width: 20%;
-    height: 100%;
-    /* border: 1px solid green; */
-}
-.container>.right{
-    width: 79%;
-    height: 100%;
-    background-color: rgba(255,255,255,0.6);
-    padding: 20px;
-    border-radius: 10px;
-    overflow-y: auto;
-    /* border: 1px solid green; */
+    align-items: flex-start;
 }
 
-.container>.left>.card{
+/* 左侧作者卡片栏 */
+.container > .left {
+    width: 22%;
+    flex-shrink: 0;
+}
+
+/* 右侧内容栏：白卡片 */
+.container > .right {
+    width: 76%;
+    height: 100%;
+    background-color: var(--card-bg);
+    padding: 24px;
+    border-radius: 8px;
+    box-shadow: var(--shadow);
+    overflow-y: auto;
+}
+
+/* 左侧作者卡片 */
+.container > .left > .card {
     width: 100%;
-    height: 300px;
-    background-color: rgba(255,255,255,0.6);
+    background-color: var(--card-bg);
     padding: 20px;
     text-align: center;
-    border-radius: 10px;
+    border-radius: 8px;
+    box-shadow: var(--shadow);
 }
-.left>.card>img{
-    width: 100px;
-    height: 100px;
+.left > .card > img {
+    width: 80px;
+    height: 80px;
     border-radius: 50%;
     margin-bottom: 10px;
+    object-fit: cover;
 }
-.left>.card>h3{
+.left > .card > h3 {
     margin: 10px 0;
+    font-size: 16px;
+    color: var(--text-main);
 }
-.left>.card>a{
-    color: gray;
+.left > .card > a {
+    color: var(--text-sub);
     text-decoration: none;
+    font-size: 13px;
+    word-break: break-all;
 }
-.left>.card>.row {
+.left > .card > a:hover {
+    color: var(--primary);
+}
+.left > .card > .row {
     width: 100px;
     height: 30px;
-    margin: 10px 0;
+    margin: 10px auto;
     display: flex;
     justify-content: space-between;
+    color: var(--text-sub);
+    font-size: 13px;
 }
-.left>.card>.row>span{
+.left > .card > .row > span {
     width: 50px;
 }

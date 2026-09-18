@@ -14,7 +14,7 @@
 6. **响应结构**：Controller 直接返回业务对象，由 `ResponseAdvice` 统一包成 `{code, errMsg, data}`。
 7. **业务异常**：抛 `BlogException("中文提示")`，由 `ExceptionAdvice` 统一转成 `Result.fail`。
 8. **常量集中**在 `common/constants/Constant`，不写魔法字符串（如请求头名 `User-Token`）。
-9. **前端**：`js/common.js` 用 `ajaxSetup` 全局注入 `User-Token`，用 `ajaxError` 统一处理 401；所有 `$.ajax` 不要在业务页重复写 headers。
+9. **前端**：`js/common.js` 用 `ajaxSend` 动态注入 `User-Token`（每次请求现读 localStorage），用 `ajaxError` 统一处理 401；所有 `$.ajax` 不要在业务页重复写 headers。
 10. **方法命名**：查询详情统一 `getBlogDetail`（不要 `getBlogDetal`）；参数名统一 `blogId`。
 
 ## editormd 使用要点（踩过的坑，复用价值高）
@@ -26,6 +26,11 @@
 - 渲染产物的 h1-h4/ul/ol/blockquote/pre/table 都需要自己补 CSS，项目原有样式只覆盖了 `p`。
 
 ## 前端约定
+- **视觉主题（CSDN 风格，2026-09-18 改版）**：配色集中在 `common.css` 的 `:root` 变量里——
+  背景 `#f4f5f5`、卡片白、主色 `#fc5531`（CSDN 红橙）、文字主 `#252933`/次 `#8a919f`、边框 `#e5e6eb`。
+  已移除背景图 + 半透明卡片，改纯浅灰底 + 白卡片圆角阴影。导航栏 sticky 吸顶、白底。
+- **导航结构统一**：`.nav > .nav-inner > (.nav-logo + .nav-menu)`，链接用 `.nav-link`，「写博客」加 `.nav-write` 主色按钮。
+  不要再写旧的 `.nav-span` / `class="space"` / `.blog-title`（旧站名类）。
 - `js/common.js` 是全站公共脚本，提供：`logout()` / `getLoginUserId()` / `isLogin()` / `requireLogin(redirectBack)` / `renderNavAuth()` / `escapeHtml()` / `toSummary()`，并统一配置 `User-Token` 请求头、统一处理 401。
 - 拼接用户输入到 HTML 时必须过 `escapeHtml()`。
 - 控制元素显隐用 `addClass/removeClass("hide")`，**不要用 `.show()`** —— 它会把 `display` 写成 `block`，破坏 CSS 里原有的 `display:flex`。
@@ -65,6 +70,20 @@
 ## 已知设计缺口（未实现，非 bug）
 - `blog_detail.html` 左侧卡片的「分类」行后端完全没有对应概念，显示 `-`。
 - `/blog/getList` 不支持按 userId 过滤，列表页没有「只看我的博客」筛选。
+
+## 待改进清单（2026-09-18 盘点，尚未动手）
+- **P0 安全/正确性**：
+  1. `BlogException` 用 `@Data` + 自定义 `message` 字段但构造器没调 `super(message)` →
+     功能上能跑（Lombok getter 覆盖了），但一旦打堆栈，异常 message 是 null，排查困难。应改为 `super(message)`。
+  2. `BlogException.code` 字段 + 双参构造器是死代码（无人读，`ExceptionAdvice` 统一用 `ResultCodeEnum.FAIL`），可删。
+  3. MD5 存密码（生产换 BCrypt）；数据库密码 + `jwt.secret` 明文在 yml（生产改环境变量）。
+- **P1 功能缺失**：无分页（getList 拉全表）、无注册接口、editor.md 图片上传未实现、「只看我的博客」筛选、分类。
+- **P2 代码质量**：
+  1. `UserServiceImpl` 里 `getUserInfoByName/getUserInfoById/getBlogInfo` 是 public 但只内部用，应改 private。
+  2. `createTime` 字段未被暴露/使用，列表详情只显示 `updateTime`，发布时间/更新时间语义混淆。
+  3. 无任何单元测试（有 starter-test 依赖但 src/test 为空），建议至少给 Md5Util 补往返测试。
+- **接口设计取舍点**：详情页 `getBlogDetail` 与 `getAuthorInfo` 各按 blogId 查一次 blog_info（重复查询）；
+  `getBlogDetail` 已返回 userId，`getAuthorInfo` 可改为直接收 userId 参数，避免二次查博客表。
 
 
 ## 环境备注
