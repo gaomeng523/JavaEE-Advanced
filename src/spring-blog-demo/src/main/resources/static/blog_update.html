@@ -5,7 +5,7 @@
     <meta charset="UTF-8">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>博客编辑页</title>
+    <title>更新博客页</title>
 
     <link rel="stylesheet" href="css/common.css">
     <link rel="stylesheet" href="css/edit.css">
@@ -20,17 +20,25 @@
         <div class="space"></div>
         <a class="nav-span" href="blog_list.html">主页</a>
         <a class="nav-span" href="blog_edit.html">写博客</a>
-        <a class="nav-span" href="#" onclick="logout()">注销</a>
+        <!-- 本页必须登录才能进入，所以初始先不显示「登录」入口 -->
+        <span id="navAuth"></span>
     </div>
     <div class="content-edit">
         <div class="push">
+            <!-- 用隐藏域保存 blogId，提交时读出来发给后端 -->
             <input type="hidden" id="blogId">
-            <input type="text" name="" id="title">
-            <input type="button" value="更新文章" id="submit" onclick="submit()">
+            <input type="text" name="" id="title" placeholder="请输入标题">
+            <input type="button" value="更新文章" id="submit" onclick="submitBlog()">
+            <!--
+                返回详情页：用 button + JS 跳转，而不是 <a href="#">。
+                用 a 标签需要动态改 href，多一处状态要同步；还要记得阻止默认行为，
+                否则点了会先跳到页首。这里只要它能带上 blogId 就够了。
+            -->
+            <input type="button" value="返回详情" id="cancel" onclick="backToDetail()">
         </div>
         <!-- markdown 插件 html代码 -->
         <div id="editor">
-            <textarea style="display:none;" id="content">##在这里写下一篇博客</textarea>
+            <textarea style="display:none;" id="content" name="content"></textarea>
         </div>
     </div>
 
@@ -39,21 +47,156 @@
     <script src="js/common.js"></script>
     <script type="text/javascript">
 
+        // 必须在外面声明，否则 $(function(){}) 里的赋值传不出去
+        var editor;
+        // 编辑器是否就绪：editormd 异步加载 CodeMirror，onload 之前 editor.cm 还是 undefined
+        var editorReady = false;
+        // 提交是否已在处理中，防止网络慢时连点两次「更新文章」发出两个更新请求
+        var submitting = false;
+        // 从地址栏取 blogId，例如 blog_update.html?blogId=3
+        var blogId = new URLSearchParams(location.search).get("blogId");
+
         $(function () {
-            var editor = editormd("editor", {
-                width  : "100%",
-                height : "550px",
-                path: "blog-editormd/lib/"
+            // 更新博客必须登录
+            if (!requireLogin(true)) {
+                return;
+            }
+
+            // 顶部导航按登录态渲染「登录 / 注销」
+            renderNavAuth();
+
+            editor = editormd("editor", {
+                width: "100%",
+                height: "550px",
+                path: "blog-editormd/lib/",
+                // onload 必须写在初始化参数里。
+                // 不要用 editor.config({onload: ...}) 事后追加 —— 那个方法内部会调用
+                // recreate() 销毁并重建编辑器，会把已经填好的内容全部冲掉
+                onload: function () {
+                    editorReady = true;
+                    loadBlogDetail();
+                }
             });
         });
-        
-        function submit() {
-           
+
+        /**
+         * 回显博客原有内容
+         * 走的是和详情页同一个接口 getBlogDetail
+         */
+        function loadBlogDetail() {
+            if (!blogId) {
+                alert("缺少 blogId 参数");
+                location.href = "blog_list.html";
+                return;
+            }
+
+            $.ajax({
+                url: '/blog/getBlogDetail?blogId=' + encodeURIComponent(blogId),
+                type: 'GET',
+                success: function (res) {
+                    if (res == null || res.code != 200 || res.data == null) {
+                        alert(res && res.errMsg ? res.errMsg : "博客不存在");
+                        location.href = "blog_list.html";
+                        return;
+                    }
+
+                    var blogInfo = res.data;
+
+                    // 前端也做一次归属校验，避免用户手输别人的 blogId 进到这个页面
+                    // 注意：这只是体验优化，真正的权限判断在后端 Service 里
+                    if (String(blogInfo.userId) !== String(getLoginUserId())) {
+                        alert("无权编辑他人的博客");
+                        location.href = "blog_detail.html?blogId=" + encodeURIComponent(blogId);
+                        return;
+                    }
+
+                    $("#blogId").val(blogInfo.id);
+                    $("#title").val(blogInfo.title);
+                    // 用 editor 的 API 写入，而不是直接改 textarea 的值
+                    editor.setMarkdown(blogInfo.content || "");
+                },
+                error: function (error) {
+                    if (error.status !== 401) {
+                        alert("加载失败，请刷新重试");
+                    }
+                }
+            });
         }
-        function getBlogInfo() {
-            
+
+        function submitBlog() {
+            // 闸门：上一次提交还没回来，忽略这次点击
+            if (submitting) {
+                return;
+            }
+            if (!editorReady) {
+                alert("编辑器还在加载中，请稍等一秒再试");
+                return;
+            }
+
+            var id = $("#blogId").val();
+            var title = $("#title").val().trim();
+            var content = editor.getMarkdown();
+
+            if (!id) {
+                alert("缺少博客 id，请从详情页重新进入");
+                return;
+            }
+            if (!title) {
+                alert("请输入标题");
+                return;
+            }
+            if (!content) {
+                alert("请输入内容");
+                return;
+            }
+
+            submitting = true;
+            $.ajax({
+                type: "POST",
+                url: "/blog/updateBlog",
+                contentType: "application/json",
+                // 字段名要和后端 UpdateBlogRequest 的属性名一致：id / title / content
+                data: JSON.stringify({
+                    id: parseInt(id),
+                    title: title,
+                    content: content
+                }),
+                success: function (result) {
+                    if (result != null && result.code == 200 && result.data == true) {
+                        alert("更新成功");
+                        location.href = "blog_detail.html?blogId=" + encodeURIComponent(id);
+                        return;
+                    }
+                    // 后端明确拒绝（博客不存在 / 无权操作他人的博客）
+                    submitting = false;
+                    alert(result && result.errMsg ? result.errMsg : "更新失败");
+                },
+                error: function (error) {
+                    // 不管是网络异常还是 400 校验失败，都要放开闸门让用户能重试。
+                    // 400 的响应体里有后端的校验提示，比笼统的「更新失败」有用得多
+                    submitting = false;
+                    if (error.status === 400 && error.responseJSON) {
+                        alert(error.responseJSON.errMsg || "参数不合法");
+                    } else if (error.status !== 401) {
+                        // 401 已由 common.js 统一处理（跳登录页）
+                        alert("更新失败，请刷新重试");
+                    }
+                }
+            });
         }
-        getBlogInfo();
+
+        /**
+         * 返回详情页
+         * 优先返回当前这篇文章的详情；万一 blogId 丢了（比如用户手输地址进来），
+         * 就退回列表页，避免跳到一个没有参数的详情页又触发「缺少 blogId」
+         */
+        function backToDetail() {
+            if (blogId) {
+                location.href = "blog_detail.html?blogId=" + encodeURIComponent(blogId);
+            } else {
+                location.href = "blog_list.html";
+            }
+        }
     </script>
 </body>
 

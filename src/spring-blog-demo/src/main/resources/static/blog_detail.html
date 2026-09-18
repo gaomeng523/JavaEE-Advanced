@@ -19,77 +19,286 @@
         <div class="space"></div>
         <a class="nav-span" href="blog_list.html">主页</a>
         <a class="nav-span" href="blog_edit.html">写博客</a>
-        <a class="nav-span" href="#" onclick="logout()">注销</a>
+        <!-- 初始按未登录渲染，登录后由 renderNavAuth() 换成「注销」 -->
+        <span id="navAuth"><a class="nav-span" href="blog_login.html">登录</a></span>
     </div>
 
     <div class="container">
         <div class="left">
             <div class="card">
                 <img src="pic/doge.jpg" alt="">
-                <h3>比特汤老师</h3>
-                <a href="#">GitHub 地址</a>
+                <!-- 默认文案给「还没拿到数据」的阶段看，getAuthorInfo() 成功后替换 -->
+                <h3 id="authorName">加载中...</h3>
+                <a href="#" id="authorGithub">GitHub 地址</a>
                 <div class="row">
                     <span>文章</span>
                     <span>分类</span>
                 </div>
                 <div class="row">
-                    <span>2</span>
-                    <span>1</span>
+                    <!--
+                        这两个数字原先写死为 2 和 1，属于假数据。
+                        后端 /user/getAuthorInfo 只返回 id / userName / githubUrl，
+                        没有「文章数」字段，前端拿不到真实数据，所以先显示 "-" 占位。
+                        如果想显示真实文章数，需要后端在 UserInfoResponse 里补一个字段
+                        （可复用已有的 /blog/getList 按 userId 过滤统计）。
+                    -->
+                    <span id="authorBlogCount">-</span>
+                    <span>-</span>
                 </div>
             </div>
         </div>
         <div class="right">
             <div class="content">
-                <div class="title">我的第一篇博客</div>
-                <div class="date">2021-06-02</div>
-                <div class="detail">
-                    <p>从今天开始, 好好学习~Lorem, ipsum dolor sit amet consectetur adipisicing elit. Obcaecati cumque alias
-                        laborum numquam aliquam? Ipsam aliquam dolorem officiis! Magni pariatur officiis iusto? Et unde
-                        quo fuga, minus deserunt architecto eligendi.</p>
-                    <p>从今天开始, 好好学习~Lorem, ipsum dolor sit amet consectetur adipisicing elit. Obcaecati cumque alias
-                        laborum numquam aliquam? Ipsam aliquam dolorem officiis! Magni pariatur officiis iusto? Et unde
-                        quo fuga, minus deserunt architecto eligendi.</p>
-                    <p>从今天开始, 好好学习~Lorem, ipsum dolor sit amet consectetur adipisicing elit. Obcaecati cumque alias
-                        laborum numquam aliquam? Ipsam aliquam dolorem officiis! Magni pariatur officiis iusto? Et unde
-                        quo fuga, minus deserunt architecto eligendi.</p>
-                </div>
-                <div class="operating">
-                    <button onclick="window.location.href='blog_update.html'">编辑</button>
+                <div class="title">加载中...</div>
+                <div class="date"></div>
+                <div class="detail"></div>
+                <!-- 默认隐藏，确认是作者本人后再由 JS 移除 hide 类 -->
+                <div class="operating hide">
+                    <button onclick="editBlog()">编辑</button>
                     <button onclick="deleteBlog()">删除</button>
+                </div>
+                <!--
+                    未登录时的提示，默认隐藏。
+                    匿名访客看别人的博客本来就不该有编辑按钮，但页面需要解释清楚，
+                    否则很容易被误认为「删除功能坏了」。
+                -->
+                <div class="login-tip hide">
+                    <a href="blog_login.html">登录</a> 后可管理自己的博客
                 </div>
             </div>
 
         </div>
     </div>
 
-    <!-- 引入 editor.md 的依赖 -->
+    <!--
+        markdownToHTML 会把渲染结果 append 到这个容器里。
+        放在 script 之前是为了确保脚本执行时它已经存在于 DOM 中。
+        渲染完后再取出 innerHTML 塞进正文区域，所以用 display:none 隐藏。
+    -->
+    <div id="detail-md" style="display:none;"></div>
+
+    <!-- 引入 editor.md 的依赖，用于把 markdown 渲染成 HTML -->
     <link rel="stylesheet" href="blog-editormd/css/editormd.css" />
     <script src="js/jquery.min.js"></script>
     <script src="blog-editormd/lib/marked.min.js"></script>
     <script src="blog-editormd/lib/prettify.min.js"></script>
-    <script src="blog-editormd/editormd.js"></script>
+    <script src="blog-editormd/editormd.min.js"></script>
     <script src="js/common.js"></script>
     <script>
-        //显示博客详情
-        getBlogDetail();
+        // 从地址栏取出 blogId，例如 blog_detail.html?blogId=3
+        var blogId = new URLSearchParams(location.search).get("blogId");
+
+        // 当前博客数据，getBlogDetail 成功后赋值，删除时用来读标题
+        var currentBlog = null;
+
+        // 删除请求是否已在处理中。
+        // 前端虽然拦了一层，但「网络慢 + 用户连点两下」仍然可能发出去两个删除请求，
+        // 第二个请求会因为博客已被逻辑删除而返回「博客不存在」，弹出一个莫名其妙的报错。
+        // 这里加个闸门，请求发出后就不再接受第二次点击。
+        var deleting = false;
+
+        // 未登录也能浏览详情页，所以导航栏的「注销」要先判断登录态再渲染
+        renderNavAuth();
+
+        if (!blogId) {
+            alert("缺少 blogId 参数");
+            location.href = "blog_list.html";
+        } else {
+            getBlogDetail();
+            getAuthorInfo();
+        }
+
         function getBlogDetail() {
             $.ajax({
-                url: '/blog/getBlogDetail'+location.search,
+                url: '/blog/getBlogDetail?blogId=' + encodeURIComponent(blogId),
                 type: 'GET',
                 success: function (res) {
-                    if(res != null && res.code == 200) {
-                        let blogInfo = res.data;
-                        $(".right .content")
+                    if (res == null || res.code != 200 || res.data == null) {
+                        alert(res && res.errMsg ? res.errMsg : "博客不存在");
+                        location.href = "blog_list.html";
+                        return;
+                    }
+
+                    var blogInfo = res.data;
+                    $(".right .content .title").text(blogInfo.title);
+                    $(".right .content .date").text(blogInfo.updateTime || "");
+
+                    // 把当前文章挂到全局，供删除成功后读取标题拼提示语
+                    currentBlog = blogInfo;
+
+                    // 用 editormd 把 markdown 渲染成 HTML
+                    //
+                    // 两个关键点：
+                    // 1. markdownToHTML 的返回值是 undefined —— 它不返回 HTML 字符串，
+                    //    而是直接把渲染结果 append 到 id 指定的容器里。所以必须先在页面上
+                    //    准备好 #detail-md 这个容器，再从容器里取 innerHTML。
+                    // 2. htmlDecode 不要传值。源码里 sanitize = (htmlDecode) ? false : true，
+                    //    一旦传了值就会关闭 marked 的 HTML 转义，用户就能在博客里注入
+                    //    <script>，形成存储型 XSS。保持 undefined 才是安全默认。
+                    editormd.markdownToHTML("detail-md", {
+                        markdown: blogInfo.content || "",
+                        toc: false,
+                        tocm: false,
+                        previewCodeHighlight: false
+                    });
+                    $(".right .content .detail").html($("#detail-md").html());
+
+                    // 只有作者本人才显示编辑 / 删除按钮
+                    // 用 addClass/removeClass 而不是 .show()：
+                    // .show() 会把 display 设成 block，覆盖掉 CSS 里的 display:flex，
+                    // 两个按钮就会从横排变成竖排
+                    //
+                    // 必须同时满足两个条件，缺一不可：
+                    //   1. isLogin() —— 已登录。少了这个判断会出问题：
+                    //      未登录时 localStorage 里可能残留着 loginUserId，
+                    //      只比 userId 的话按钮会显示出来，但点下去必然 401
+                    //      （因为 User-Token 是拿不出来的）。
+                    //      按钮的显示条件绝不能比服务的鉴权条件更宽松。
+                    //   2. userId 相同 —— 是本人的博客。
+                    //      两边都转成字符串再比：后端返回 Integer，
+                    //      localStorage 里存的也是字符串，直接 === 会因类型不同而恒为 false。
+                    var isAuthor = isLogin()
+                        && String(blogInfo.userId) === String(getLoginUserId());
+
+                    if (isAuthor) {
+                        $(".right .content .operating").removeClass("hide");
+                    } else {
+                        $(".right .content .operating").addClass("hide");
+
+                        // 未登录时给一句说明。
+                        // 否则匿名访客看到的是「这篇博客挺像我写的，怎么没有编辑按钮」，
+                        // 完全不知道是因为没登录 —— 这是最容易被误解成 bug 的地方。
+                        if (!isLogin()) {
+                            $(".right .content .login-tip").removeClass("hide");
+                        }
+                    }
+                },
+                error: function (error) {
+                    if (error.status !== 401) {
+                        alert("加载失败，请刷新重试");
                     }
                 }
-            })
+            });
         }
-        //显示博客作者信息
-        //var userUrl = "/user/getAuthorInfo" + location.search;
-        //getUserInfo(userUrl);
 
+        /**
+         * 查询并展示作者信息
+         * 注意参数名是 blogId，要和后端 UserController 保持一致
+         *
+         * 同时把作者 id 暂存起来，供 getList 统计该作者的文章数（见 countAuthorBlog）
+         */
+        function getAuthorInfo() {
+            $.ajax({
+                url: '/user/getAuthorInfo?blogId=' + encodeURIComponent(blogId),
+                type: 'GET',
+                success: function (res) {
+                    if (res == null || res.code != 200 || res.data == null) {
+                        // 接口本身失败时不要一直停在「加载中...」，给个明确文案
+                        $("#authorName").text("匿名用户");
+                        return;
+                    }
+
+                    $("#authorName").text(res.data.userName || "匿名用户");
+
+                    if (res.data.githubUrl) {
+                        // 用 attr 同时设置地址和文案，保持 <a> 的语义
+                        $("#authorGithub").attr("href", res.data.githubUrl).text("GitHub 地址");
+                    } else {
+                        // 没填地址就摘掉 href，否则会变成一个点了跳到页首的死链接
+                        $("#authorGithub").removeAttr("href").text("暂无 GitHub 地址");
+                    }
+
+                    // 拿到作者 id 后顺手统计一下他有多少篇文章
+                    countAuthorBlog(res.data.id);
+                },
+                error: function (error) {
+                    if (error.status !== 401) {
+                        $("#authorName").text("匿名用户");
+                    }
+                }
+            });
+        }
+
+        /**
+         * 统计某位作者的文章数
+         *
+         * 走后端 /blog/countByUser 接口，由数据库 count 完成。
+         *
+         * 为什么不用「拉 /blog/getList 再前端过滤计数」：
+         * 那样每次打开详情页都要多查一次全表，并且把每篇博客的完整正文
+         * 都传到浏览器里，只为了数出一个数字 —— 数据量一大就很浪费。
+         *
+         * @param {Number} authorId 作者的用户 id
+         */
+        function countAuthorBlog(authorId) {
+            if (authorId === null || authorId === undefined) {
+                return;
+            }
+            $.ajax({
+                url: '/blog/countByUser?userId=' + encodeURIComponent(authorId),
+                type: 'GET',
+                success: function (res) {
+                    if (res == null || res.code != 200) {
+                        return;
+                    }
+                    // 后端返回的是 Long，Jackson 序列化后是数字
+                    var count = res.data;
+                    if (count === null || count === undefined) {
+                        count = 0;
+                    }
+                    $("#authorBlogCount").text(count);
+                }
+                // 统计失败就保持 "-"，不影响正文阅读
+            });
+        }
+
+        function editBlog() {
+            location.href = "blog_update.html?blogId=" + encodeURIComponent(blogId);
+        }
+
+        /**
+         * 删除博客
+         *
+         * 注意：后端 deleteBlog 返回的是 Boolean 或者报错，
+         * 所以这里的成功回调要同时判断 code 和 data，否则「越权删除」这类业务失败
+         * 会以 HTTP 200 + code=500 的形式返回，被误判成删除成功。
+         */
         function deleteBlog() {
-            alert("删除博客");
+            // 已有的删除请求还没结束，直接忽略这次点击
+            if (deleting) {
+                return;
+            }
+            // 带标题二次确认，比干巴巴的「确定要删除吗」更能让用户确认删的是哪一篇
+            var title = currentBlog && currentBlog.title ? currentBlog.title : "这篇博客";
+            if (!confirm("确定要删除《" + title + "》吗？删除后不可恢复")) {
+                return;
+            }
+
+            deleting = true;
+            $.ajax({
+                type: "POST",
+                url: "/blog/deleteBlog?blogId=" + encodeURIComponent(blogId),
+                success: function (res) {
+                    if (res != null && res.code == 200 && res.data == true) {
+                        alert("删除成功");
+                        location.href = "blog_list.html";
+                        // 这里不需要复位 deleting：页面马上就要跳走了，
+                        // 如果在跳转前复位，用户还有一小段时间可以再点一次
+                        return;
+                    }
+                    // 走到这里说明后端明确拒绝了（博客不存在 / 无权操作）
+                    deleting = false;
+                    alert(res && res.errMsg ? res.errMsg : "删除失败");
+                },
+                error: function (error) {
+                    // 出错要放开闸门，否则用户只能刷新页面才能重试
+                    // 401 已由 common.js 统一处理（会跳登录页），这里不再重复提示
+                    deleting = false;
+                    if (error.status !== 401) {
+                        alert("删除失败，请刷新重试");
+                    }
+                }
+            });
         }
     </script>
 </body>

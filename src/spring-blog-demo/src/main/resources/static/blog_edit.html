@@ -20,12 +20,15 @@
         <div class="space"></div>
         <a class="nav-span" href="blog_list.html">主页</a>
         <a class="nav-span" href="blog_edit.html">写博客</a>
-        <a class="nav-span" href="#" onclick="logout()">注销</a>
+        <!-- 本页必须登录才能进入，所以初始先不显示「登录」入口 -->
+        <span id="navAuth"></span>
     </div>
     <div class="content-edit">
         <div class="push">
-            <input type="text" name="" id="title">
-            <input type="button" value="发布文章" id="submit" onclick="submit()">
+            <input type="text" name="" id="title" placeholder="请输入标题">
+            <input type="button" value="发布文章" id="submit" onclick="submitBlog()">
+            <!-- 清空按钮：markdown 只存在浏览器内存里，给一个主动放弃的出口 -->
+            <input type="button" value="清空" id="cancel" onclick="clearEditor()">
         </div>
         <!-- markdown 插件 html代码 -->
         <div id="editor">
@@ -38,16 +41,108 @@
     <script src="js/common.js"></script>
     <script type="text/javascript">
 
+        var editor;
+        // 标记编辑器是否已初始化完成。
+        // editormd 内部要异步加载 CodeMirror 等子模块，在 onload 触发前
+        // editor.cm 是 undefined，此时调用 getMarkdown() 会抛错。
+        var editorReady = false;
+        // 提交是否已在处理中。防止网络慢时连点两次「发布文章」，
+        // 结果在数据库里插入两篇一模一样的博客。
+        var submitting = false;
+
         $(function () {
-            var editor = editormd("editor", {
+            // 写博客必须登录，未登录直接引导去登录页
+            if (!requireLogin(true)) {
+                return;
+            }
+
+            // 顶部导航按登录态渲染「登录 / 注销」
+            renderNavAuth();
+
+            editor = editormd("editor", {
                 width: "100%",
                 height: "550px",
-                path: "blog-editormd/lib/"
+                path: "blog-editormd/lib/",
+                onload: function () {
+                    editorReady = true;
+                }
             });
         });
 
-        function submit() {
-            alert("发表博客");
+        function submitBlog() {
+            // 闸门：上一次提交还没回来，忽略这次点击
+            if (submitting) {
+                return;
+            }
+            if (!editorReady) {
+                alert("编辑器还在加载中，请稍等一秒再试");
+                return;
+            }
+
+            // 用 editor 的 API 取值，而不是 $("#content").val()：markdown 内容
+            // 由 CodeMirror 接管，直接读 DOM 拿到的只是初始那行占位文本
+            var title = $("#title").val().trim();
+            var content = editor.getMarkdown();
+
+            if (!title) {
+                alert("请输入标题");
+                return;
+            }
+            if (!content) {
+                alert("请输入内容");
+                return;
+            }
+
+            submitting = true;
+            $.ajax({
+                type: "POST",
+                url: "/blog/addBlog",
+                contentType: "application/json",
+                // 不再传 userId：作者由后端从 token 里取，前端传的话可以被篡改
+                data: JSON.stringify({
+                    title: title,
+                    content: content
+                }),
+                success: function (result) {
+                    if (result != null && result.code == 200 && result.data == true) {
+                        alert("博客发表成功");
+                        location.href = "blog_list.html";
+                        return;
+                    }
+                    // 后端明确拒绝才复位闸门，成功时页面马上就跳走了
+                    submitting = false;
+                    alert(result && result.errMsg ? result.errMsg : "发表失败");
+                },
+                error: function (error) {
+                    // 一定要复位，否则用户只能刷新页面才能重新提交
+                    submitting = false;
+                    if (error.status === 400 && error.responseJSON) {
+                        // 400 是后端参数校验失败（标题为空/超过100字等），
+                        // 提示语由后端 @NotBlank/@Length 的 message 提供
+                        alert(error.responseJSON.errMsg || "参数不合法");
+                    } else if (error.status !== 401) {
+                        // 401 已由 common.js 统一处理（跳登录页），这里不重复弹窗
+                        alert("发表失败，请刷新重试");
+                    }
+                }
+            });
+        }
+
+        /**
+         * 取消写博客：清空编辑器内容
+         *
+         * 只是本地清空，不涉及后端。加二次确认是因为 markdown 内容
+         * 只存在浏览器内存里，清掉就找不回来了。
+         */
+        function clearEditor() {
+            if (!editorReady) {
+                return;
+            }
+            if (!confirm("确定要清空当前内容吗？清空后无法恢复")) {
+                return;
+            }
+            editor.setMarkdown("");
+            $("#title").val("");
         }
     </script>
 </body>

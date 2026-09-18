@@ -17,64 +17,134 @@
         <div class="space"></div>
         <a class="nav-span" href="blog_list.html">主页</a>
         <a class="nav-span" href="blog_edit.html">写博客</a>
-        <a class="nav-span" href="#" onclick="logout()">注销</a>
+        <!--
+            这一块由 JS 渲染：
+            初始内容按「未登录」来写，登录后由 getUserInfo() 替换成「注销」。
+            这样匿名访客不会看到一个点了就跳走的「注销」。
+        -->
+        <span id="navAuth"><a class="nav-span" href="blog_login.html">登录</a></span>
     </div>
 
     <div class="container">
         <div class="left">
             <div class="card">
                 <img src="pic/doge.jpg" alt="">
-                <h3>比特汤老师</h3>
-                <a href="#">GitHub 地址</a>
+                <!-- 默认文案给未登录访客看，登录后由 getUserInfo() 替换成真实用户名 -->
+                <h3 id="userName">未登录</h3>
+                <a href="#" id="userGithub">GitHub 地址</a>
                 <div class="row">
                     <span>文章</span>
                     <span>分类</span>
                 </div>
                 <div class="row">
-                    <span>2</span>
+                    <span id="blogCount">0</span>
                     <span>1</span>
                 </div>
             </div>
         </div>
         <div class="right">
-<!--            <div class="blog">-->
-<!--                <div class="title">我的第一篇博客</div>-->
-<!--                <div class="date">2021-06-02</div>-->
-<!--                <div class="desc">今天开始, 好好学习Lorem ipsum dolor sit, amet consectetur adipisicing elit. Quas nesciunt, hic voluptatum, dolorem quisquam modi accusantium, commodi dolores architecto ratione vel exercitationem optio. Facere repellendus autem, obcaecati dolore sequi incidunt?</div>-->
-<!--                <a class="detail" href="blog_detail.html">查看全文&gt;&gt;</a>-->
-<!--            </div>-->
-<!--            <div class="blog">-->
-<!--                <div class="title">我的第一篇博客</div>-->
-<!--                <div class="date">2021-06-02</div>-->
-<!--                <div class="desc">今天开始, 好好学习Lorem ipsum dolor sit, amet consectetur adipisicing elit. Quas nesciunt, hic voluptatum, dolorem quisquam modi accusantium, commodi dolores architecto ratione vel exercitationem optio. Facere repellendus autem, obcaecati dolore sequi incidunt?</div>-->
-<!--                <a class="detail" href="blog_detail.html">查看全文&gt;&gt;</a>-->
-<!--            </div>-->
         </div>
     </div>
     <script src="js/jquery.min.js"></script>
     <script src="js/common.js"></script>
     <script>
         getBlogList();
+        getUserInfo();
+        // 顶部导航按登录态渲染「登录 / 注销」
+        renderNavAuth();
+
         function getBlogList() {
             $.ajax({
                 type: "GET",
                 url: "/blog/getList",
                 success: function (res) {
-                    if(res != null && res.code == 200) {
-                        let blogList = res.data;
-                        let finalHtml = "";
-                        for(const blogInfo of blogList) {
-                            finalHtml += '<div class="blog">';
-                            finalHtml += '<div class="title">'+blogInfo.title+'</div>';
-                            finalHtml += '<div class="date">'+blogInfo.updateTime+'</div>';
-                            finalHtml += '<div class="desc">'+blogInfo.content+'</div>';
-                            finalHtml += '<a class="detail" href="blog_detail.html?blogId='+blogInfo.id+'">查看全文&gt;&gt;</a>'
-                            finalHtml += '<div>';
-                        }
-                        $(".container .right").html(finalHtml);
+                    // 请求头由 common.js 的 ajaxSend 统一携带，这里不用重复写
+                    if (res == null || res.code != 200) {
+                        $(".container .right").html('<div class="blog">加载失败，请刷新重试</div>');
+                        return;
+                    }
+
+                    var blogList = res.data || [];
+                    if (blogList.length === 0) {
+                        // 空列表给一个可直接操作的出口，而不是一句干巴巴的提示
+                        $(".container .right").html(
+                            '<div class="empty">' +
+                            '   <p>还没有博客</p>' +
+                            '   <a class="detail" href="blog_edit.html">去写第一篇</a>' +
+                            '</div>'
+                        );
+                        $("#blogCount").text(0);
+                        return;
+                    }
+
+                    var finalHtml = "";
+                    for (var i = 0; i < blogList.length; i++) {
+                        var blogInfo = blogList[i];
+                        finalHtml += '<div class="blog">';
+                        // 标题和内容都来自用户输入，必须转义，否则会形成 XSS 漏洞
+                        finalHtml += '<div class="title">' + escapeHtml(blogInfo.title) + '</div>';
+                        // updateTime 为空时后端会返回 null，这里兜底显示
+                        finalHtml += '<div class="date">' + (blogInfo.updateTime || "暂无时间") + '</div>';
+                        // 列表页只展示摘要，避免把整篇正文都铺在首页
+                        finalHtml += '<div class="desc">' + escapeHtml(toSummary(blogInfo.content)) + '</div>';
+                        // blogId 是后端返回的 Integer，理论上安全，但拼进 URL 前仍统一转义更稳妥
+                        finalHtml += '<a class="detail" href="blog_detail.html?blogId='
+                            + encodeURIComponent(blogInfo.id) + '">查看全文&gt;&gt;</a>';
+                        finalHtml += '</div>';
+                    }
+                    $(".container .right").html(finalHtml);
+                    $("#blogCount").text(blogList.length);
+                },
+                error: function (error) {
+                    // 401 已由 common.js 的 ajaxError 统一处理（跳登录页）
+                    if (error.status !== 401) {
+                        $(".container .right").html('<div class="blog">加载失败，请刷新重试</div>');
                     }
                 }
-            })
+            });
+        }
+
+        /**
+         * 渲染左上角卡片里的个人信息
+         *
+         * 没登录时不请求 —— 后端 /user/getUserInfo 是需要登录的接口，
+         * 未登录去调只会白挨一个 401，还会把用户踢到登录页，
+         * 而首页本来是可以匿名浏览的。
+         */
+        function getUserInfo() {
+            if (!isLogin()) {
+                return;
+            }
+            $.ajax({
+                type: "GET",
+                url: "/user/getUserInfo",
+                success: function (res) {
+                    if (res == null || res.code != 200 || res.data == null) {
+                        return;
+                    }
+                    $("#userName").text(res.data.userName || "未命名用户");
+                    // 没填 GitHub 地址时给出提示，而不是留一个点了没反应的链接
+                    if (res.data.githubUrl) {
+                        $("#userGithub").attr("href", res.data.githubUrl).text("GitHub 地址");
+                    } else {
+                        $("#userGithub").removeAttr("href").text("暂无 GitHub 地址");
+                    }
+                },
+                error: function (error) {
+                    // 这个请求只影响左侧卡片，失败不该影响整个页面。
+                    // 特别是 401：localStorage 里可能残留着失效的旧 token，
+                    // 如果交给 common.js 的全局处理，会弹窗 + 强制跳登录页，
+                    // 而访客其实只是想看看首页 —— 这是过度反应。
+                    // 这里就地处理：清掉失效凭证、把卡片恢复成未登录样子，页面照常用。
+                    if (error.status === 401) {
+                        localStorage.removeItem("userToken");
+                        localStorage.removeItem("loginUserId");
+                        $("#userName").text("未登录");
+                        $("#userGithub").removeAttr("href").text("GitHub 地址");
+                        renderNavAuth();
+                    }
+                }
+            });
         }
     </script>
 </body>

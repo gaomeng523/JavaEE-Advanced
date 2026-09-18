@@ -24,3 +24,18 @@
     color: black;
     /* margin-bottom: 20px; */
 }
+
+/* 空列表状态：没有博客时给一句提示 + 一个「去写第一篇」的按钮，
+   靠 flex 垂直居中，比原来单独一行文字看起来更像个正经页面 */
+.right>.empty{
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    color: #666;
+}
+.right>.empty>p{
+    margin-bottom: 10px;
+    font-size: 16px;
+}

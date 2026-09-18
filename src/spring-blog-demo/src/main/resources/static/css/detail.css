@@ -18,12 +18,73 @@
     line-height: 24px;
     margin-bottom: 10px;
 }
+
+/* markdown 渲染出来的标题、列表、代码块原本没有样式，
+   这里补上基础排版，否则正文会挤成一团 */
+.right .content .detail h1,
+.right .content .detail h2,
+.right .content .detail h3,
+.right .content .detail h4{
+    margin: 20px 0 10px;
+    line-height: 1.4;
+}
+.right .content .detail h1{ font-size: 24px; }
+.right .content .detail h2{ font-size: 20px; }
+.right .content .detail h3{ font-size: 18px; }
+.right .content .detail h4{ font-size: 16px; }
+
+.right .content .detail ul,
+.right .content .detail ol{
+    padding-left: 2em;
+    margin-bottom: 10px;
+    line-height: 24px;
+}
+.right .content .detail ul{ list-style: disc; }
+.right .content .detail ol{ list-style: decimal; }
+
+.right .content .detail blockquote{
+    border-left: 4px solid #ddd;
+    padding-left: 12px;
+    margin: 10px 0;
+    color: #666;
+}
+
+.right .content .detail pre{
+    background-color: #f5f5f5;
+    padding: 12px;
+    border-radius: 5px;
+    overflow-x: auto;
+    margin-bottom: 10px;
+}
+.right .content .detail code{
+    font-family: Consolas, Monaco, monospace;
+    font-size: 13px;
+}
+.right .content .detail img{
+    max-width: 100%;
+}
+.right .content .detail table{
+    border-collapse: collapse;
+    margin-bottom: 10px;
+}
+.right .content .detail table th,
+.right .content .detail table td{
+    border: 1px solid #ddd;
+    padding: 6px 12px;
+}
+
 .content .operating{
     padding-top: 50px;
     width: 40%;
     margin: 0 auto;
     display: flex;
     justify-content: space-between;
+}
+
+/* 默认隐藏操作按钮，只有作者本人访问时 JS 才移除这个类。
+   用类名而不是 inline style，是为了不破坏上面的 display:flex */
+.content .operating.hide{
+    display: none;
 }
 .content .operating button{
     width: 100px;
@@ -32,4 +93,20 @@
     color: white;
     border-radius: 5px;
     border: none;
+}
+
+/* 未登录时显示的提示：解释为什么没有编辑 / 删除按钮。
+   居中、弱化配色，避免喧宾夺主抢正文的注意力。 */
+.content .login-tip{
+    text-align: center;
+    padding-top: 40px;
+    color: gray;
+    font-size: 14px;
+}
+.content .login-tip.hide{
+    display: none;
+}
+.content .login-tip>a{
+    color: green;
+    text-decoration: none;
 }
