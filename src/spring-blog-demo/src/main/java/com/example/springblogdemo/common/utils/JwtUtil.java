@@ -23,13 +23,8 @@ import java.util.Map;
 @Slf4j
 @Component
 public class JwtUtil {
-
-    /** token 有效期：7 天（单位毫秒） */
     public static final long EXPIRATION_TIME = 7 * 24 * 60 * 60 * 1000L;
-
-    /** 签名密钥，在 application.yml 的 jwt.secret 中配置（Base64 编码的字符串） */
     private final Key key;
-
     public JwtUtil(@Value("${jwt.secret}") String secretString) {
         this.key = Keys.hmacShaKeyFor(Decoders.BASE64.decode(secretString));
     }

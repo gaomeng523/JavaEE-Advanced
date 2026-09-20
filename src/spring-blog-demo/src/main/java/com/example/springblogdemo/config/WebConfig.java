@@ -1,5 +1,6 @@
 package com.example.springblogdemo.config;
 
+import com.example.springblogdemo.common.interceptor.LogInterceptor;
 import com.example.springblogdemo.common.interceptor.LoginInterceptor;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.web.servlet.config.annotation.InterceptorRegistry;
@@ -12,9 +13,11 @@ import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 public class WebConfig implements WebMvcConfigurer {
 
     private final LoginInterceptor loginInterceptor;
+    private final LogInterceptor logInterceptor;
 
-    public WebConfig(LoginInterceptor loginInterceptor) {
+    public WebConfig(LoginInterceptor loginInterceptor, LogInterceptor logInterceptor) {
         this.loginInterceptor = loginInterceptor;
+        this.logInterceptor = logInterceptor;
     }
 
     /**
@@ -29,6 +32,13 @@ public class WebConfig implements WebMvcConfigurer {
      */
     @Override
     public void addInterceptors(InterceptorRegistry registry) {
+        // ① 观测拦截器：拦全部路径，只打日志、不做鉴权。
+        //    它的作用是让你在控制台能直观看到「拦截器机制在工作」。
+        //    排查完可以注释掉下面这行，避免日志被静态资源刷屏。
+        registry.addInterceptor(logInterceptor).addPathPatterns("/**");
+
+        // ② 登录拦截器：真正的鉴权，只拦需要登录的写接口。
+        //    注意它和上面的观测拦截器是「两个独立对象」，顺序上先注册的先执行。
         registry.addInterceptor(loginInterceptor)
                 .addPathPatterns(
                         "/blog/addBlog",

@@ -71,12 +71,19 @@
 - `blog_detail.html` 左侧卡片的「分类」行后端完全没有对应概念，显示 `-`。
 - `/blog/getList` 不支持按 userId 过滤，列表页没有「只看我的博客」筛选。
 
-## 待改进清单（2026-09-18 盘点，尚未动手）
-- **P0 安全/正确性**：
-  1. `BlogException` 用 `@Data` + 自定义 `message` 字段但构造器没调 `super(message)` →
-     功能上能跑（Lombok getter 覆盖了），但一旦打堆栈，异常 message 是 null，排查困难。应改为 `super(message)`。
-  2. `BlogException.code` 字段 + 双参构造器是死代码（无人读，`ExceptionAdvice` 统一用 `ResultCodeEnum.FAIL`），可删。
-  3. MD5 存密码（生产换 BCrypt）；数据库密码 + `jwt.secret` 明文在 yml（生产改环境变量）。
+## 拦截器调试约定（2026-09-18 补充）
+- **`LoginInterceptor` 成功放行时也打 `log.info("登录校验通过...")`**。原因：原来只有失败分支有日志，
+  登录后正常操作在控制台毫无痕迹，用户会误判成「拦截器没被调用」。**排查鉴权问题先看这行日志是否存在。**
+- **`common/interceptor/LogInterceptor` 是纯观测类**：拦 `/**`，`preHandle` 永远 `return true`，不做鉴权。
+  作用是证明「Spring MVC 拦截器机制本身在工作」——`LoginInterceptor` 只挂 4 个写接口，无法证明全局链路通畅。
+  **它不是安全措施**；排查完应注释掉 `WebConfig` 里注册它的那行，否则静态资源会把日志刷屏。
+- 注意区分：`addPathPatterns` 里的路径**不区分 HTTP 方法**；读接口不在清单里 → 拦截器不执行，属设计如此，不是失效。
+- 若加日志后仍看不到任何拦截器痕迹 → 先怀疑 IDE 未重新编译（`target/classes` 里是旧 class）。
+
+## 待改进清单（2026-09-18 盘点）
+- ~~**P0-1** `BlogException` 未调 `super(message)`~~ → **已修**（改 `super(message)`，去掉 `@Data` 与 message 字段）。
+- ~~**P0-2** `BlogException.code` + 双参构造器是死代码~~ → **已删**（Grep 确认全项目 12 处调用均为单参）。
+- **P0 剩余**：MD5 存密码（生产换 BCrypt）；数据库密码 + `jwt.secret` 明文在 yml（生产改环境变量）。
 - **P1 功能缺失**：无分页（getList 拉全表）、无注册接口、editor.md 图片上传未实现、「只看我的博客」筛选、分类。
 - **P2 代码质量**：
   1. `UserServiceImpl` 里 `getUserInfoByName/getUserInfoById/getBlogInfo` 是 public 但只内部用，应改 private。

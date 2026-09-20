@@ -56,6 +56,12 @@ public class LoginInterceptor implements HandlerInterceptor {
         Integer userId = Integer.valueOf(idObj.toString());
         request.setAttribute(Constant.CURRENT_USER_ID, userId);
 
+        // 成功放行时也打一行日志。
+        // 之前这里没有日志，导致「登录状态下正常操作」在控制台看不到任何拦截器痕迹，
+        // 很容易被误判成「拦截器没被调用」。有这行后，只要发出请求就能确认它跑了。
+        log.info("登录校验通过，userId:{}, uri:{}, method:{}",
+                userId, request.getRequestURI(), request.getMethod());
+
         return true;
     }
 }

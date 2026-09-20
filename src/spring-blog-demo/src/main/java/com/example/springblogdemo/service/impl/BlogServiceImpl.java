@@ -39,8 +39,6 @@ public class BlogServiceImpl implements BlogService {
     @Override
     public BlogInfoResponse getBlogDetail(Integer blogId) {
         BlogInfo blogInfo = getBlogInfo(blogId);
-        // 查不到要明确抛业务异常，否则 BeanTransfer.trans(null) 会返回 null
-        // 上游如果直接取属性就会 NPE，错误信息也完全不友好
         if (blogInfo == null) {
             log.warn("博客不存在，blogId={}", blogId);
             throw new BlogException("博客不存在");
